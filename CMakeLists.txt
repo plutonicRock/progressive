@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 2.8)
+set (CMAKE_CXX_STANDARD 11)
+project( Progressive )
+find_package( OpenCV REQUIRED )
+add_executable( Progressive Progressive.cpp )
+target_link_libraries( Progressive ${OpenCV_LIBS} ${CMAKE_DL_LIBS})
