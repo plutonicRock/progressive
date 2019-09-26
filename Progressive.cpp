@@ -12,27 +12,30 @@ int main(int argc, char** argv )
   }
 
   std::string window_name = "This is a window";
+  int delay = 1;
+  int frameNum = -1;
+  // Kind of greenish
+  Scalar colorScalar = cv::Scalar( 94, 206, 165 );
+  Mat oneFrame;
+  Point org;
+  org.x = 0;
+  org.y = 40;
+
 
   namedWindow(window_name.c_str(), WINDOW_AUTOSIZE);
+  moveWindow(window_name.c_str(), 400, 0);
+  
+  
 
-    // if ( argc != 2 )
-    // {
-    //     printf("usage: DisplayImage.out <Image_Path>\n");
-    //     return -1;
-    // }
+  for (;;){
+    inputvideo >> oneFrame;
+    ++ frameNum;
+    
+    putText(oneFrame, "Testing text rendering", org, FONT_HERSHEY_SIMPLEX, 1.0, colorScalar);
+    imshow(window_name.c_str(), oneFrame);
 
-    // Mat image;
-    // image = imread( argv[1], 1 );
-
-    // if ( !image.data )
-    // {
-    //     printf("No image data \n");
-    //     return -1;
-    // }
-    // namedWindow("Display Image", WINDOW_AUTOSIZE );
-    // imshow("Display Image", image);
-
-    // waitKey(0);
-
-    // return 0;
+    char c = (char)waitKey(delay);
+    if ( c==27 ) break;
+  }
+  return 0;
 }
