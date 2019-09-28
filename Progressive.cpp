@@ -95,8 +95,11 @@ int main(int argc, char** argv )
   undistMap2.create( oneFrame.size(), CV_16SC2 );
 
   // Read in file data
-  std::string camera_param_file = "camParams.xml";
+  std::string camera_param_file = "../camParams.xml";
   FileStorage fs(camera_param_file, FileStorage::READ);
+  if (!fs.isOpened()){
+    std::cout<< "Failed to open" << std::endl;
+  }
   
   cv::Size image_size;
   Mat cameraMatrix = Mat_<double>::zeros(3,3);
@@ -106,11 +109,11 @@ int main(int argc, char** argv )
   
   // small_image_size.height(480);
   // small_image_size.width(640);
-  PrintMatrix("cameraMatrix", cameraMatrix);
   fs["cameraMatrix"] >> cameraMatrix;
   // fs << "cameraMatrix" << cameraMatrix;
   PrintMatrix("cameraMatrix", cameraMatrix);
   fs["dist_coeffs"] >> dist_coeffs;
+  PrintMatrix("dist_coeffs", dist_coeffs);
   
 
   return 0;
@@ -135,7 +138,7 @@ int main(int argc, char** argv )
     ++ frameNum;
     // ((map1.type() == CV_32FC2 || map1.type() == CV_16SC2) && map2.empty()) 
     // || 
-    // (map1.type() == CV_32FC1 && map2.type() == CV_32FC1)
+    // (map1.type() == CV_32FC1 && map2.type() == CV_32FC1)PrintMatrix("cameraMatrix", cameraMatrix);
 
     
     putText(oneFrame, "Testing text rendering", org, FONT_HERSHEY_SIMPLEX, 1.0, colorScalar);
