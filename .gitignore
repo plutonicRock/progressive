@@ -34,6 +34,9 @@
 # build directory
 build/*
 
+# vscode
+.vscode
+
 CMakeLists.txt.user
 CMakeCache.txt
 CMakeFiles
