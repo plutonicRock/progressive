@@ -29,9 +29,8 @@ int main(int argc, char** argv )
 
   std::string window_name = "This is a window";
   int delay = 1;
-  int frameNum = -1;
-  // Kind of greenish
-  Scalar colorScalar = cv::Scalar( 94, 206, 165 );
+  int frameNum = -1;  
+  
   Mat oneFrame;
 
   // Screen text data
@@ -39,14 +38,14 @@ int main(int argc, char** argv )
   org.x = 0;
   org.y = 40;
   std::string screen_text = "Testing text rendering";
+  // Kind of greenish
+  Scalar colorScalar = cv::Scalar( 94, 206, 165 );
 
   // Create window
   namedWindow(window_name.c_str(), WINDOW_AUTOSIZE);
   moveWindow(window_name.c_str(), 400, 0);
 
   cv::Mat undistMap1, undistMap2;
-  // undistMap1.create( oneFrame.size(), CV_16SC2 );
-  // undistMap2.create( oneFrame.size(), CV_16SC2 );
 
   // Read in file data
   std::string camera_param_file = "../camParams.xml";
