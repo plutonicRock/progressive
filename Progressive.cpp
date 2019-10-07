@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <opencv2/opencv.hpp>
+#include <opencv2/aruco/charuco.hpp>
 
 using namespace cv;
 
@@ -74,6 +75,13 @@ int main(int argc, char** argv )
     // Undistort
     cv::Mat oneFrame_noDistort;    
     cv::remap(oneFrame, oneFrame_noDistort, undistMap1, undistMap2, cv::INTER_LINEAR);
+
+    auto mArucoDictionary = cv::aruco::getPredefinedDictionary(
+                    cv::aruco::PREDEFINED_DICTIONARY_NAME(4));
+    std::vector<std::vector<cv::Point2f> > corners, rejected;
+    std::vector<int> ids;
+    cv::aruco::detectMarkers(oneFrame_noDistort, mArucoDictionary, corners, ids, cv::aruco::DetectorParameters::create(), rejected);
+    std::cout<<"ID size:" << ids.size() << std::endl;
     
     // Show image on screen
     imshow(window_name.c_str(), oneFrame_noDistort);
