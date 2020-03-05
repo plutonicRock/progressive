@@ -80,6 +80,15 @@ int main(int argc, char **argv)
   // Generate undistortion maps
   cv::initUndistortRectifyMap(cameraMatrix, dist_coeffs, cv::noArray(), cameraMatrix, image_size, CV_16SC2, undistMap1, undistMap2);
 
+  // Define charuco board
+  auto mArucoDictionary = cv::aruco::getPredefinedDictionary(
+      cv::aruco::PREDEFINED_DICTIONARY_NAME(4));
+  const int squaresX = 5;
+  const int squaresY = 5;
+  const double squareLength = 0.0332;
+  const double markerLength = 0.021;
+  auto board = cv::aruco::CharucoBoard::create(5, 5, squareLength, markerLength, mArucoDictionary);
+
   for (;;)
   {
     inputvideo >> oneFrame;
@@ -92,31 +101,72 @@ int main(int argc, char **argv)
     cv::Mat oneFrame_noDistort;
     cv::remap(oneFrame, oneFrame_noDistort, undistMap1, undistMap2, cv::INTER_LINEAR);
 
-    auto mArucoDictionary = cv::aruco::getPredefinedDictionary(
-        cv::aruco::PREDEFINED_DICTIONARY_NAME(4));
+    // Extract marker corners and ids
+
     std::vector<std::vector<cv::Point2f>> corners, rejected;
     std::vector<int> ids;
-    cv::aruco::detectMarkers(oneFrame_noDistort, mArucoDictionary, corners, ids, cv::aruco::DetectorParameters::create(), rejected);
+    auto detector_params = cv::aruco::DetectorParameters::create();
+    detector_params->cornerRefinementMethod = aruco::CORNER_REFINE_SUBPIX;
+    cv::aruco::detectMarkers(oneFrame_noDistort, mArucoDictionary, corners, ids, detector_params, rejected);
 
-    int square_id = 0;
-    int index = GetIDIndex(ids, square_id);
-    // std::vector<cv::Point2f> coors;
-    if (index >= 0)
+    // Draw marker corners and IDs
+    if (ids.size() > 0)
+      cv::aruco::drawDetectedMarkers(oneFrame_noDistort, corners, ids, cv::Scalar(255, 0, 0));
+
+    // int square_id = 0;
+    // int index = GetIDIndex(ids, square_id);
+    // // std::vector<cv::Point2f> coors;
+    // if (index >= 0)
+    // {
+    //   auto coors = corners.at(index);
+    //   std::cout << "Coordinates for tile number: " << square_id << std::endl;
+    //   for (auto coor : coors)
+    //   {
+    //     std::cout << coor << std::endl;
+    //   }
+    // }
+
+    // std::cout << "ID size:" << ids.size() << std::endl;
+
+    // Pose estimation
+    std::vector<cv::Vec3d> rvecs, tvecs;
+    cv::aruco::estimatePoseSingleMarkers(corners, markerLength, cameraMatrix, dist_coeffs, rvecs, tvecs);
+
+    // Pose estimation using board
+    static cv::Vec3d rvecs_board, tvecs_board;
+    std::vector<cv::Point2f> ch_corners;
+    std::vector<int> ch_ids;
+    if (ids.size() > 0)
     {
-      auto coors = corners.at(index);
-      std::cout << "Coordinates for tile number: " << square_id << std::endl;
-      for (auto coor : coors)
+      cv::aruco::interpolateCornersCharuco(corners, ids, oneFrame_noDistort, board, ch_corners, ch_ids, cameraMatrix, dist_coeffs);
+
+      if (ch_ids.size() > 0)
       {
-        std::cout << coor << std::endl;
+        cv::aruco::drawDetectedCornersCharuco(oneFrame_noDistort, ch_corners, ch_ids);
+        cv::aruco::estimatePoseCharucoBoard(ch_corners, ch_ids, board, cameraMatrix, dist_coeffs, rvecs_board, tvecs_board);
+        std::cout<<"Distance: "<< cv::norm(tvecs_board) << std::endl;
       }
     }
 
-    if (ids.size() > 0)
-      cv::aruco::drawDetectedMarkers(oneFrame_noDistort, corners,ids);
+    // Draw Axis on image
+    double axis_size = 0.03;
+    // Draw charuco board axis
+    cv::aruco::drawAxis(oneFrame_noDistort, cameraMatrix, dist_coeffs, rvecs_board, tvecs_board, axis_size * 5);
+    // Draw individual marker axes
+    for (int i = 0; i < rvecs.size(); i++)
+    {
+      cv::aruco::drawAxis(oneFrame_noDistort, cameraMatrix, dist_coeffs, rvecs[i], tvecs[i], axis_size);
+    }
 
-    // cv::aruco::drawDetectedCornersCharuco(oneFrame_noDistort, corners, ids);
-
-    std::cout << "ID size:" << ids.size() << std::endl;
+    // Calculate average of norm of all vectors
+    double sum = 0;
+    double total = 0;
+    for (auto tvec : tvecs)
+    {
+      sum += cv::norm(tvec);
+      total++;
+    }
+    // std::cout << "Distance: " << ((bool)total ? sum / total : 0) << "m" << std::endl;
 
     // Show image on screen
     imshow(window_name.c_str(), oneFrame_noDistort);
